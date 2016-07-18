@@ -1,3 +1,7 @@
 var MapView = require('./components/MapView');
+var GMSMapView = require('./components/GMSMapView');
 
-module.exports = MapView;
+module.exports = {
+  MapView,
+  GMSMapView,
+};
