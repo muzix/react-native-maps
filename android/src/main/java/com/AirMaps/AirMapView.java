@@ -1,27 +1,15 @@
-package com.airbnb.android.react.maps;
+package com.AirMaps;
 
-import android.content.pm.PackageManager;
-import android.content.res.ColorStateList;
-import android.graphics.Bitmap;
-import android.graphics.Color;
+
 import android.graphics.Point;
-import android.graphics.PorterDuff;
 import android.os.Handler;
-import android.os.Build;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
-import android.view.View.OnLayoutChangeListener;
-import android.content.Context;
 
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
 import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
@@ -33,8 +21,8 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
-import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.Projection;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.LatLng;
@@ -45,102 +33,73 @@ import com.google.android.gms.maps.model.Polyline;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
-import static android.support.v4.content.PermissionChecker.checkSelfPermission;
-
-public class AirMapView extends MapView implements GoogleMap.InfoWindowAdapter,
-        GoogleMap.OnMarkerDragListener, OnMapReadyCallback {
+public class AirMapView
+        extends MapView
+        implements
+        GoogleMap.InfoWindowAdapter,
+        GoogleMap.OnMarkerDragListener,
+        OnMapReadyCallback
+{
     public GoogleMap map;
-
-    private ProgressBar mapLoadingProgressBar;
-    private RelativeLayout mapLoadingLayout;
-    private ImageView cacheImageView;
-    private Boolean isMapLoaded = false;
-    private Integer loadingBackgroundColor = null;
-    private Integer loadingIndicatorColor = null;
 
     private LatLngBounds boundsToMove;
     private boolean showUserLocation = false;
     private boolean isMonitoringRegion = false;
     private boolean isTouchDown = false;
-    private boolean handlePanDrag = false;
-    private boolean cacheEnabled = false;
-    private boolean loadingEnabled = false;
 
-    private static final String[] PERMISSIONS = new String[] {
-            "android.permission.ACCESS_FINE_LOCATION", "android.permission.ACCESS_COARSE_LOCATION"};
+    private ArrayList<AirMapFeature> features = new ArrayList<>();
+    private HashMap<Marker, AirMapMarker> markerMap = new HashMap<>();
+    private HashMap<Polyline, AirMapPolyline> polylineMap = new HashMap<>();
+    private HashMap<Polygon, AirMapPolygon> polygonMap = new HashMap<>();
+    private HashMap<Circle, AirMapCircle> circleMap = new HashMap<>();
 
-    private final List<AirMapFeature> features = new ArrayList<>();
-    private final Map<Marker, AirMapMarker> markerMap = new HashMap<>();
-    private final Map<Polyline, AirMapPolyline> polylineMap = new HashMap<>();
-    private final Map<Polygon, AirMapPolygon> polygonMap = new HashMap<>();
-    private final Map<Circle, AirMapCircle> circleMap = new HashMap<>();
-
-    private final ScaleGestureDetector scaleDetector;
-    private final GestureDetectorCompat gestureDetector;
-    private final AirMapManager manager;
+    private ScaleGestureDetector scaleDetector;
+    private GestureDetectorCompat gestureDetector;
+    private AirMapManager manager;
     private LifecycleEventListener lifecycleListener;
-    private OnLayoutChangeListener onLayoutChangeListener;
     private boolean paused = false;
-    private ThemedReactContext context;
 
     final EventDispatcher eventDispatcher;
 
-    public AirMapView(ThemedReactContext context, Context appContext, AirMapManager manager) {
-        super(appContext);
+
+
+    public AirMapView(ThemedReactContext context, AirMapManager manager) {
+        super(context);
         this.manager = manager;
-        this.context = context;
 
         super.onCreate(null);
         super.onResume();
         super.getMapAsync(this);
 
         final AirMapView view = this;
-        scaleDetector =
-                new ScaleGestureDetector(context, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
+        scaleDetector = new ScaleGestureDetector(context, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
 //            @Override
 //            public boolean onScale(ScaleGestureDetector detector) {
 //                Log.d("AirMapView", "onScale");
 //                return false;
 //            }
 
-                    @Override
-                    public boolean onScaleBegin(ScaleGestureDetector detector) {
-                        view.startMonitoringRegion();
-                        return true; // stop recording this gesture. let mapview handle it.
-                    }
+            @Override
+            public boolean onScaleBegin (ScaleGestureDetector detector) {
+                view.startMonitoringRegion();
+                return true; // stop recording this gesture. let mapview handle it.
+            }
         });
 
-        gestureDetector =
-                new GestureDetectorCompat(context, new GestureDetector.SimpleOnGestureListener() {
-                    @Override
-                    public boolean onDoubleTap(MotionEvent e) {
-                        view.startMonitoringRegion();
-                        return false;
-                    }
-
-                    @Override
-                    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX,
-                                            float distanceY) {
-                        if (handlePanDrag) {
-                            onPanDrag(e2);
-                        }
-                        view.startMonitoringRegion();
-                        return false;
-                    }
-                });
-
-        onLayoutChangeListener = new OnLayoutChangeListener() {
-            @Override public void onLayoutChange(View v, int left, int top, int right, int bottom,
-                int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                if (!AirMapView.this.paused) {
-                    AirMapView.this.cacheView();
-                }
+        gestureDetector = new GestureDetectorCompat(context, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onDoubleTap(MotionEvent e) {
+                view.startMonitoringRegion();
+                return false;
             }
-        };
-        this.addOnLayoutChangeListener(this.onLayoutChangeListener);
+
+            @Override
+            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+                view.startMonitoringRegion();
+                return false;
+            }
+        });
 
         eventDispatcher = context.getNativeModule(UIManagerModule.class).getEventDispatcher();
     }
@@ -222,45 +181,14 @@ public class AirMapView extends MapView implements GoogleMap.InfoWindowAdapter,
             }
         });
 
-        map.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
-            @Override public void onMapLoaded() {
-                isMapLoaded = true;
-                AirMapView.this.cacheView();
-            }
-        });
-
-        map.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
-            @Override
-            public void onPolylineClick(Polyline polyline)
-            {
-              WritableMap event;
-
-              event = makeClickEventData(new LatLng(0,0));
-              event.putString("action", "polyline-press");
-              manager.pushEvent(view, "onPolylinePress", event);
-
-              event = makeClickEventData(new LatLng(0,0));
-              event.putString("action", "polyline-press");
-              manager.pushEvent(polylineMap.get(polyline), "onPress", event);
-
-              return; // returning false opens the callout window, if possible
-            }
-        });
-
-        // We need to be sure to disable location-tracking when app enters background, in-case some
-        // other module
-        // has acquired a wake-lock and is controlling location-updates, otherwise, location-manager
-        // will be left
-        // updating location constantly, killing the battery, even though some other location-mgmt
-        // module may
+        // We need to be sure to disable location-tracking when app enters background, in-case some other module
+        // has acquired a wake-lock and is controlling location-updates, otherwise, location-manager will be left
+        // updating location constantly, killing the battery, even though some other location-mgmt module may
         // desire to shut-down location-services.
         lifecycleListener = new LifecycleEventListener() {
             @Override
             public void onHostResume() {
-                if (hasPermissions()) {
-                    //noinspection MissingPermission
-                    map.setMyLocationEnabled(showUserLocation);
-                }
+                map.setMyLocationEnabled(showUserLocation);
                 synchronized (AirMapView.this) {
                     AirMapView.this.onResume();
                     paused = false;
@@ -269,10 +197,7 @@ public class AirMapView extends MapView implements GoogleMap.InfoWindowAdapter,
 
             @Override
             public void onHostPause() {
-                if (hasPermissions()) {
-                    //noinspection MissingPermission
-                    map.setMyLocationEnabled(false);
-                }
+                map.setMyLocationEnabled(false);
                 synchronized (AirMapView.this) {
                     AirMapView.this.onPause();
                     paused = true;
@@ -285,23 +210,18 @@ public class AirMapView extends MapView implements GoogleMap.InfoWindowAdapter,
             }
         };
 
-        context.addLifecycleEventListener(lifecycleListener);
-    }
-
-    private boolean hasPermissions() {
-        return checkSelfPermission(getContext(), PERMISSIONS[0]) == PackageManager.PERMISSION_GRANTED ||
-                checkSelfPermission(getContext(), PERMISSIONS[1]) == PackageManager.PERMISSION_GRANTED;
+        ((ThemedReactContext) getContext()).addLifecycleEventListener(lifecycleListener);
     }
 
     /*
     onDestroy is final method so I can't override it.
      */
-    public synchronized void doDestroy() {
+    public synchronized  void doDestroy() {
         if (lifecycleListener != null) {
-            context.removeLifecycleEventListener(lifecycleListener);
+            ((ThemedReactContext) getContext()).removeLifecycleEventListener(lifecycleListener);
             lifecycleListener = null;
         }
-        if (!paused) {
+        if(!paused) {
             onPause();
         }
         onDestroy();
@@ -333,78 +253,7 @@ public class AirMapView extends MapView implements GoogleMap.InfoWindowAdapter,
 
     public void setShowsUserLocation(boolean showUserLocation) {
         this.showUserLocation = showUserLocation; // hold onto this for lifecycle handling
-        if (hasPermissions()) {
-            //noinspection MissingPermission
-            map.setMyLocationEnabled(showUserLocation);
-        }
-    }
-
-    public void setShowsMyLocationButton(boolean showMyLocationButton) {
-        if (hasPermissions()) {
-            map.getUiSettings().setMyLocationButtonEnabled(showMyLocationButton);
-        }
-    }
-
-    public void setToolbarEnabled(boolean toolbarEnabled) {
-        if (hasPermissions()) {
-            map.getUiSettings().setMapToolbarEnabled(toolbarEnabled);
-        }
-    }
-
-    public void setCacheEnabled(boolean cacheEnabled) {
-        this.cacheEnabled = cacheEnabled;
-        this.cacheView();
-    }
-
-    public void enableMapLoading(boolean loadingEnabled) {
-        if (loadingEnabled && !this.isMapLoaded) {
-            this.getMapLoadingLayoutView().setVisibility(View.VISIBLE);
-        }
-    }
-
-    public void setLoadingBackgroundColor(Integer loadingBackgroundColor) {
-        this.loadingBackgroundColor = loadingBackgroundColor;
-
-        if (this.mapLoadingLayout != null) {
-            if (loadingBackgroundColor == null) {
-                this.mapLoadingLayout.setBackgroundColor(Color.WHITE);
-            } else {
-                this.mapLoadingLayout.setBackgroundColor(this.loadingBackgroundColor);
-            }
-        }
-    }
-
-    public void setLoadingIndicatorColor(Integer loadingIndicatorColor) {
-        this.loadingIndicatorColor = loadingIndicatorColor;
-        if (this.mapLoadingProgressBar != null) {
-            Integer color = loadingIndicatorColor;
-            if (color == null) {
-                color = Color.parseColor("#606060");
-            }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                ColorStateList progressTintList = ColorStateList.valueOf(loadingIndicatorColor);
-                ColorStateList secondaryProgressTintList = ColorStateList.valueOf(loadingIndicatorColor);
-                ColorStateList indeterminateTintList = ColorStateList.valueOf(loadingIndicatorColor);
-
-                this.mapLoadingProgressBar.setProgressTintList(progressTintList);
-                this.mapLoadingProgressBar.setSecondaryProgressTintList(secondaryProgressTintList);
-                this.mapLoadingProgressBar.setIndeterminateTintList(indeterminateTintList);
-            } else {
-                PorterDuff.Mode mode = PorterDuff.Mode.SRC_IN;
-                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.GINGERBREAD_MR1) {
-                    mode = PorterDuff.Mode.MULTIPLY;
-                }
-                if (this.mapLoadingProgressBar.getIndeterminateDrawable() != null)
-                    this.mapLoadingProgressBar.getIndeterminateDrawable().setColorFilter(color, mode);
-                if (this.mapLoadingProgressBar.getProgressDrawable() != null)
-                    this.mapLoadingProgressBar.getProgressDrawable().setColorFilter(color, mode);
-            }
-        }
-    }
-
-    public void setHandlePanDrag(boolean handlePanDrag) {
-        this.handlePanDrag = handlePanDrag;
+        map.setMyLocationEnabled(showUserLocation);
     }
 
     public void addFeature(View child, int index) {
@@ -414,25 +263,25 @@ public class AirMapView extends MapView implements GoogleMap.InfoWindowAdapter,
             AirMapMarker annotation = (AirMapMarker) child;
             annotation.addToMap(map);
             features.add(index, annotation);
-            Marker marker = (Marker) annotation.getFeature();
+            Marker marker = (Marker)annotation.getFeature();
             markerMap.put(marker, annotation);
         } else if (child instanceof AirMapPolyline) {
             AirMapPolyline polylineView = (AirMapPolyline) child;
             polylineView.addToMap(map);
             features.add(index, polylineView);
-            Polyline polyline = (Polyline) polylineView.getFeature();
+            Polyline polyline = (Polyline)polylineView.getFeature();
             polylineMap.put(polyline, polylineView);
         } else if (child instanceof AirMapPolygon) {
             AirMapPolygon polygonView = (AirMapPolygon) child;
             polygonView.addToMap(map);
             features.add(index, polygonView);
-            Polygon polygon = (Polygon) polygonView.getFeature();
+            Polygon polygon = (Polygon)polygonView.getFeature();
             polygonMap.put(polygon, polygonView);
         } else if (child instanceof AirMapCircle) {
             AirMapCircle circleView = (AirMapCircle) child;
             circleView.addToMap(map);
             features.add(index, circleView);
-            Circle circle = (Circle) circleView.getFeature();
+            Circle circle = (Circle)circleView.getFeature();
             circleMap.put(circle, circleView);
         } else {
             // TODO(lmr): throw? User shouldn't be adding non-feature children.
@@ -449,7 +298,7 @@ public class AirMapView extends MapView implements GoogleMap.InfoWindowAdapter,
 
     public void removeFeatureAt(int index) {
         AirMapFeature feature = features.remove(index);
-
+        feature.removeFromMap(map);
 
         if (feature instanceof AirMapMarker) {
             markerMap.remove(feature.getFeature());
@@ -460,7 +309,6 @@ public class AirMapView extends MapView implements GoogleMap.InfoWindowAdapter,
         } else if (feature instanceof AirMapCircle) {
             circleMap.remove(feature.getFeature());
         }
-        feature.removeFromMap(map);
     }
 
     public WritableMap makeClickEventData(LatLng point) {
@@ -486,14 +334,14 @@ public class AirMapView extends MapView implements GoogleMap.InfoWindowAdapter,
         // if boundsToMove is not null, we now have the MapView's width/height, so we can apply
         // a proper camera move
         if (boundsToMove != null) {
-            HashMap<String, Float> data = (HashMap<String, Float>) extraData;
+            HashMap<String, Float> data = (HashMap<String, Float>)extraData;
             float width = data.get("width");
             float height = data.get("height");
             map.moveCamera(
                     CameraUpdateFactory.newLatLngBounds(
                             boundsToMove,
-                            (int) width,
-                            (int) height,
+                            (int)width,
+                            (int)height,
                             0
                     )
             );
@@ -515,7 +363,7 @@ public class AirMapView extends MapView implements GoogleMap.InfoWindowAdapter,
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
         for (AirMapFeature feature : features) {
             if (feature instanceof AirMapMarker) {
-                Marker marker = (Marker) feature.getFeature();
+                Marker marker = (Marker)feature.getFeature();
                 builder.include(marker.getPosition());
             }
             // TODO(lmr): may want to include shapes / etc.
@@ -551,21 +399,18 @@ public class AirMapView extends MapView implements GoogleMap.InfoWindowAdapter,
 
         int action = MotionEventCompat.getActionMasked(ev);
 
-        switch (action) {
+        switch(action) {
             case (MotionEvent.ACTION_DOWN):
-                this.getParent().requestDisallowInterceptTouchEvent(true);
                 isTouchDown = true;
                 break;
             case (MotionEvent.ACTION_MOVE):
                 startMonitoringRegion();
                 break;
             case (MotionEvent.ACTION_UP):
-                this.getParent().requestDisallowInterceptTouchEvent(false);
                 isTouchDown = false;
                 break;
         }
-        super.dispatchTouchEvent(ev);
-        return true;
+        return super.dispatchTouchEvent(ev);
     }
 
     // Timer Implementation
@@ -591,8 +436,7 @@ public class AirMapView extends MapView implements GoogleMap.InfoWindowAdapter,
         public void run() {
 
             LatLngBounds bounds = map.getProjection().getVisibleRegion().latLngBounds;
-            if (lastBoundsEmitted == null ||
-                    LatLngBoundsUtils.BoundsAreDifferent(bounds, lastBoundsEmitted)) {
+            if (lastBoundsEmitted == null || LatLngBoundsUtils.BoundsAreDifferent(bounds, lastBoundsEmitted)) {
                 LatLng center = map.getCameraPosition().target;
                 lastBoundsEmitted = bounds;
                 eventDispatcher.dispatchEvent(new RegionChangeEvent(getId(), bounds, center, true));
@@ -630,96 +474,5 @@ public class AirMapView extends MapView implements GoogleMap.InfoWindowAdapter,
         AirMapMarker markerView = markerMap.get(marker);
         event = makeClickEventData(marker.getPosition());
         manager.pushEvent(markerView, "onDragEnd", event);
-    }
-
-    private ProgressBar getMapLoadingProgressBar() {
-        if (this.mapLoadingProgressBar == null) {
-            this.mapLoadingProgressBar = new ProgressBar(getContext());
-            this.mapLoadingProgressBar.setIndeterminate(true);
-        }
-        if (this.loadingIndicatorColor != null) {
-            this.setLoadingIndicatorColor(this.loadingIndicatorColor);
-        }
-        return this.mapLoadingProgressBar;
-    }
-
-    private RelativeLayout getMapLoadingLayoutView() {
-        if (this.mapLoadingLayout == null) {
-            this.mapLoadingLayout = new RelativeLayout(getContext());
-            this.mapLoadingLayout.setBackgroundColor(Color.LTGRAY);
-            this.addView(this.mapLoadingLayout,
-                new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.FILL_PARENT));
-
-            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-            params.addRule(RelativeLayout.CENTER_IN_PARENT);
-            this.mapLoadingLayout.addView(this.getMapLoadingProgressBar(), params);
-
-            this.mapLoadingLayout.setVisibility(View.INVISIBLE);
-        }
-        this.setLoadingBackgroundColor(this.loadingBackgroundColor);
-        return this.mapLoadingLayout;
-    }
-
-    private ImageView getCacheImageView() {
-        if (this.cacheImageView == null) {
-            this.cacheImageView = new ImageView(getContext());
-            this.addView(this.cacheImageView,
-                new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-            this.cacheImageView.setVisibility(View.INVISIBLE);
-        }
-        return this.cacheImageView;
-    }
-
-    private void removeCacheImageView() {
-        if (this.cacheImageView != null) {
-            ((ViewGroup)this.cacheImageView.getParent()).removeView(this.cacheImageView);
-            this.cacheImageView = null;
-        }
-    }
-
-    private void removeMapLoadingProgressBar() {
-        if (this.mapLoadingProgressBar != null) {
-            ((ViewGroup)this.mapLoadingProgressBar.getParent()).removeView(this.mapLoadingProgressBar);
-            this.mapLoadingProgressBar = null;
-        }
-    }
-
-    private void removeMapLoadingLayoutView() {
-        this.removeMapLoadingProgressBar();
-        if (this.mapLoadingLayout != null) {
-            ((ViewGroup)this.mapLoadingLayout.getParent()).removeView(this.mapLoadingLayout);
-            this.mapLoadingLayout = null;
-        }
-    }
-
-    private void cacheView() {
-        if (this.cacheEnabled) {
-            final ImageView cacheImageView = this.getCacheImageView();
-            final RelativeLayout mapLoadingLayout = this.getMapLoadingLayoutView();
-            cacheImageView.setVisibility(View.INVISIBLE);
-            mapLoadingLayout.setVisibility(View.VISIBLE);
-            if (this.isMapLoaded) {
-                this.map.snapshot(new GoogleMap.SnapshotReadyCallback() {
-                    @Override public void onSnapshotReady(Bitmap bitmap) {
-                        cacheImageView.setImageBitmap(bitmap);
-                        cacheImageView.setVisibility(View.VISIBLE);
-                        mapLoadingLayout.setVisibility(View.INVISIBLE);
-                    }
-                });
-            }
-        }
-        else {
-            this.removeCacheImageView();
-            if (this.isMapLoaded) {
-                this.removeMapLoadingLayoutView();
-            }
-        }
-    }
-
-    public void onPanDrag(MotionEvent ev) {
-        Point point = new Point((int) ev.getX(), (int) ev.getY());
-        LatLng coords = this.map.getProjection().fromScreenLocation(point);
-        WritableMap event = makeClickEventData(coords);
-        manager.pushEvent(this, "onPanDrag", event);
     }
 }

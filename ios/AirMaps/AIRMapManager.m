@@ -322,10 +322,28 @@ RCT_EXPORT_METHOD(takeSnapshot:(nonnull NSNumber *)reactTag
     }
 }
 
+//- (void)mapView:(MKMapView *)mapView didAddAnnotationViews:(NSArray<MKAnnotationView *> *)views
+//{
+//    for (MKAnnotationView *view in views) {
+//        if (view.tag == 10) {
+//            [[view superview] bringSubviewToFront:view];
+//        } else {
+//            [[view superview] sendSubviewToBack:view];
+//        }
+//    }
+//}
 
 #pragma mark Annotation Stuff
 
-
+- (void)mapView:(MKMapView *)mapView didAddAnnotationViews:(NSArray *)views {
+    for (MKAnnotationView * annView in views) {
+        if (annView.tag == 10) {
+            [[annView superview] bringSubviewToFront:annView];
+        } else {
+            [[annView superview] sendSubviewToBack:annView];
+        }
+    }
+}
 
 - (void)mapView:(AIRMap *)mapView didSelectAnnotationView:(MKAnnotationView *)view
 {

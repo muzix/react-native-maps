@@ -63,6 +63,7 @@ const CGFloat AIRMapZoomBoundBuffer = 0.01;
     if ((self = [super init])) {
         _hasStartedRendering = NO;
         _reactSubviews = [NSMutableArray new];
+        _bottomOverlay = [NSMutableArray new];
 
         // Find Apple link label
         for (UIView *subview in self.subviews) {
@@ -94,13 +95,80 @@ const CGFloat AIRMapZoomBoundBuffer = 0.01;
         [self addAnnotation:(id <MKAnnotation>) subview];
     } else if ([subview isKindOfClass:[AIRMapPolyline class]]) {
         ((AIRMapPolyline *)subview).map = self;
-        [self addOverlay:(id<MKOverlay>)subview];
+        
+        AIRMapPolyline *overlay = (AIRMapPolyline*)subview;
+        if (overlay.zIndex == 1) {
+            [self addOverlay:overlay];
+        } else {
+            [self insertOverlay:overlay atIndex:0];
+        }
+        
+        
+//        AIRMapPolyline *overlay = (AIRMapPolyline*)subview;
+//        if (overlay.zIndex != 1) {
+//            if (self.topOverlay) {
+//                [self insertOverlay:overlay belowOverlay:self.topOverlay];
+//                [self setNeedsDisplay];
+//            } else {
+//                [self.bottomOverlay addObject:overlay];
+//            }
+//        } else {
+//            self.topOverlay = overlay;
+//            [self insertOverlay:overlay atIndex:0];
+//            [self setNeedsDisplay];
+//            for (id <MKOverlay> tmpOverlay in self.bottomOverlay) {
+//                [self insertOverlay:tmpOverlay belowOverlay:self.topOverlay];
+//                [self setNeedsDisplay];
+//            }
+//            [self.bottomOverlay removeAllObjects];
+//        }
+        // [self setNeedsDisplay];
+        
+//        NSArray *overlays = [NSArray arrayWithArray:self.overlays];
+//        [self removeOverlays:overlays];
+//        [self setNeedsDisplay];
+//        AIRMapPolyline *topOverlay = nil;
+//        for (AIRMapPolyline *tmpOverlay in overlays) {
+//            if (tmpOverlay.zIndex == 1) {
+//                [self addOverlay:tmpOverlay];
+//                topOverlay = tmpOverlay;
+//            }
+//        }
+//        for (AIRMapPolyline *tmpOverlay in overlays) {
+//            if (tmpOverlay.zIndex != 1) {
+//                [self insertOverlay:tmpOverlay belowOverlay:topOverlay];
+//            }
+//        }
+//        [self setNeedsDisplay];
+        
+       
+//        AIRMapPolyline *topOverlay = nil;
+//        for (topOverlay in self.overlays) {
+//            if (topOverlay.zIndex == 1) {
+//                break;
+//            }
+//        }
+//        if (topOverlay.zIndex == 1) {
+//            [self insertOverlay:(id<MKOverlay>)subview belowOverlay:topOverlay];
+//            [self setNeedsDisplay];
+////            [self removeOverlay:topOverlay];
+////            NSInteger maxIndex = self.overlays.count - 1;
+////            [self insertOverlay:topOverlay aboveOverlay:self.overlays[maxIndex]];
+//        } else {
+//            NSLog(@"Overlay zIndex: %lu", ((AIRMapPolyline*)subview).zIndex);
+//            [self addOverlay:(id<MKOverlay>)subview];
+//            [self setNeedsDisplay];
+//        }
+//         NSLog(@"Overlay : %lu", self.overlays.count);
+        
+//        [self addOverlay:(id<MKOverlay>)subview];
     } else if ([subview isKindOfClass:[AIRMapPolygon class]]) {
         ((AIRMapPolygon *)subview).map = self;
         [self addOverlay:(id<MKOverlay>)subview];
     } else if ([subview isKindOfClass:[AIRMapCircle class]]) {
         [self addOverlay:(id<MKOverlay>)subview];
     }
+   
     [_reactSubviews insertObject:(UIView *)subview atIndex:(NSUInteger) atIndex];
 }
 

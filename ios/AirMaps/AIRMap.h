@@ -15,6 +15,8 @@
 #import "RCTComponent.h"
 #import "SMCalloutView.h"
 
+#import "WildcardGestureRecognizer.h"
+
 extern const CLLocationDegrees AIRMapDefaultSpan;
 extern const NSTimeInterval AIRMapRegionChangeObserveInterval;
 extern const CGFloat AIRMapZoomBoundBuffer;
@@ -24,6 +26,8 @@ extern const CGFloat AIRMapZoomBoundBuffer;
 @property (nonatomic, strong) SMCalloutView *calloutView;
 @property (nonatomic, strong) UIImageView *cacheImageView;
 @property (nonatomic, strong) UIView *loadingView;
+@property (nonatomic, strong) id<MKOverlay> topOverlay;
+@property (nonatomic, strong) NSMutableArray *bottomOverlay;
 
 @property (nonatomic, assign) BOOL followUserLocation;
 @property (nonatomic, assign) BOOL hasStartedRendering;
@@ -43,6 +47,8 @@ extern const CGFloat AIRMapZoomBoundBuffer;
 
 
 @property (nonatomic, assign) BOOL ignoreRegionChanges;
+
+@property (nonatomic, strong) WildcardGestureRecognizer * tapInterceptor;
 
 @property (nonatomic, copy) RCTBubblingEventBlock onChange;
 @property (nonatomic, copy) RCTBubblingEventBlock onPress;

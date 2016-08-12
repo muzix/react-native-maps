@@ -30,6 +30,11 @@ RCT_EXPORT_MODULE()
 - (UIView *)view
 {
     AIRMapPolyline *polyline = [AIRMapPolyline new];
+//    UITapGestureRecognizer *tapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(_handleTap:)];
+//    // setting this to NO allows the parent MapView to continue receiving marker selection events
+//    tapGestureRecognizer.cancelsTouchesInView = NO;
+//    [polyline addGestureRecognizer:tapGestureRecognizer];
+    // polyline.bridge = self.bridge;
     return polyline;
 }
 
@@ -41,10 +46,27 @@ RCT_EXPORT_VIEW_PROPERTY(lineJoin, CGLineJoin)
 RCT_EXPORT_VIEW_PROPERTY(miterLimit, CGFloat)
 RCT_EXPORT_VIEW_PROPERTY(lineDashPhase, CGFloat)
 RCT_EXPORT_VIEW_PROPERTY(lineDashPattern, NSArray)
+RCT_EXPORT_VIEW_PROPERTY(zIndex, NSInteger)
 
 // NOTE(lmr):
 // for now, onPress events for overlays will be left unimplemented. Seems it is possible with some work, but
 // it is difficult to achieve in both ios and android so I decided to leave it out.
-//RCT_EXPORT_VIEW_PROPERTY(onPress, RCTBubblingEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onPress, RCTBubblingEventBlock)
+
+//#pragma mark - Events
+//
+//- (void)_handleTap:(UITapGestureRecognizer *)recognizer {
+//    AIRMapPolyline *polyline = (AIRMapPolyline *)recognizer.view;
+//    if (!polyline) return;
+//    
+//    // the actual marker got clicked
+//    id event = @{
+//                 @"action": @"polyline-press",
+//                 @"id": polyline.identifier ?: @"unknown",
+//                 };
+//    
+//    if (polyline.onPress) polyline.onPress(event);
+//}
+
 
 @end

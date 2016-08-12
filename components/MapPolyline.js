@@ -133,9 +133,13 @@ var MapPolyline = React.createClass({
     };
   },
 
+  _onPress: function(e) {
+    this.props.onPress && this.props.onPress(e);
+  },
+
   render: function() {
     return (
-      <AIRMapPolyline {...this.props} />
+      <AIRMapPolyline {...this.props} onPress={this._onPress}/>
     );
   },
 });
