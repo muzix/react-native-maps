@@ -64,6 +64,7 @@ const CGFloat AIRMapZoomBoundBuffer = 0.01;
     if ((self = [super init])) {
         _hasStartedRendering = NO;
         _reactSubviews = [NSMutableArray new];
+        _bottomOverlay = [NSMutableArray new];
 
         // Find Apple link label
         for (UIView *subview in self.subviews) {
@@ -97,7 +98,13 @@ const CGFloat AIRMapZoomBoundBuffer = 0.01;
         [self addAnnotation:(id <MKAnnotation>) subview];
     } else if ([subview isKindOfClass:[AIRMapPolyline class]]) {
         ((AIRMapPolyline *)subview).map = self;
-        [self addOverlay:(id<MKOverlay>)subview];
+        // [self addOverlay:(id<MKOverlay>)subview];
+        AIRMapPolyline *overlay = (AIRMapPolyline*)subview;
+        if (overlay.zIndex == 1) {
+            [self addOverlay:overlay];
+        } else {
+            [self insertOverlay:overlay atIndex:0];
+        }
     } else if ([subview isKindOfClass:[AIRMapPolygon class]]) {
         ((AIRMapPolygon *)subview).map = self;
         [self addOverlay:(id<MKOverlay>)subview];

@@ -222,6 +222,24 @@ public class AirMapView extends MapView implements GoogleMap.InfoWindowAdapter,
             }
         });
 
+        map.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
+            @Override
+            public void onPolylineClick(Polyline polyline)
+            {
+              WritableMap event;
+
+              event = makeClickEventData(new LatLng(0,0));
+              event.putString("action", "polyline-press");
+              manager.pushEvent(view, "onPolylinePress", event);
+
+              event = makeClickEventData(new LatLng(0,0));
+              event.putString("action", "polyline-press");
+              manager.pushEvent(polylineMap.get(polyline), "onPress", event);
+
+              return; // returning false opens the callout window, if possible
+            }
+        });
+
         // We need to be sure to disable location-tracking when app enters background, in-case some
         // other module
         // has acquired a wake-lock and is controlling location-updates, otherwise, location-manager

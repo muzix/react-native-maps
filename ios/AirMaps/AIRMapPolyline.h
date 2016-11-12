@@ -22,6 +22,7 @@
 @property (nonatomic, strong) MKPolyline *polyline;
 @property (nonatomic, strong) MKPolylineRenderer *renderer;
 
+@property (nonatomic, strong) NSString *identifier;
 @property (nonatomic, strong) NSArray<AIRMapCoordinate *> *coordinates;
 @property (nonatomic, strong) UIColor *fillColor;
 @property (nonatomic, strong) UIColor *strokeColor;
@@ -30,7 +31,10 @@
 @property (nonatomic, assign) CGLineCap lineCap;
 @property (nonatomic, assign) CGLineJoin lineJoin;
 @property (nonatomic, assign) CGFloat lineDashPhase;
+@property (nonatomic, assign) NSInteger zIndex;
 @property (nonatomic, strong) NSArray <NSNumber *> *lineDashPattern;
+
+@property (nonatomic, copy) RCTBubblingEventBlock onPress;
 
 #pragma mark MKOverlay protocol
 

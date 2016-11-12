@@ -392,7 +392,15 @@ RCT_EXPORT_METHOD(takeSnapshot:(nonnull NSNumber *)reactTag
 
 #pragma mark Annotation Stuff
 
-
+- (void)mapView:(MKMapView *)mapView didAddAnnotationViews:(NSArray *)views {
+    for (MKAnnotationView * annView in views) {
+        if (annView.tag == 10) {
+            [[annView superview] bringSubviewToFront:annView];
+        } else {
+            [[annView superview] sendSubviewToBack:annView];
+        }
+    }
+}
 
 - (void)mapView:(AIRMap *)mapView didSelectAnnotationView:(MKAnnotationView *)view
 {

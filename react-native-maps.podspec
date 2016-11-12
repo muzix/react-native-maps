@@ -6,7 +6,7 @@ Pod::Spec.new do |s|
   s.authors      = { "intelligibabble" => "leland.m.richardson@gmail.com" }
   s.homepage     = "https://github.com/airbnb/react-native-maps#readme"
   s.license      = "MIT"
-  s.platform     = :ios, "8.0"
+  s.platform     = :ios, "7.0"
 
   s.source       = { :git => "https://github.com/airbnb/react-native-maps.git" }
   s.source_files  = "ios/AirMaps/**/*.{h,m}"
