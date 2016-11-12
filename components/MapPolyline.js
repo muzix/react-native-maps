@@ -127,8 +127,8 @@ const defaultProps = {
 class MapPolyline extends React.Component {
   _onPress = (e) => {
     this.props.onPress && this.props.onPress(e);
-  },
-
+  }
+  
   render() {
     const AIRMapPolyline = this.getAirComponent();
     return (
