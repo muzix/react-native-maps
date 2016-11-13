@@ -9,6 +9,8 @@
 #import <QuartzCore/QuartzCore.h>
 #import "WildcardGestureRecognizer.h"
 
+#define MAX_DISTANCE_PX 22
+
 @implementation AIRMapPolyline {
 
 }
